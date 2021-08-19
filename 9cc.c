@@ -218,8 +218,10 @@ void gen(Node *node) {
             printf("    mul r0, r1\n");
             break;
         case ND_DIV:
-            printf("    cqo\n");
-            printf("    idiv r1\n");
+            printf("    str lr, [sp, #-4]!\n");
+            printf("    bl  __divsi3\n");
+            printf("    ldr lr, [sp], #4\n");
+            printf("    bx  lr\n");
             break;
     }
 
