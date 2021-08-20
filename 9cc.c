@@ -31,8 +31,9 @@ typedef enum {
     ND_SUB, // -
     ND_MUL, // *
     ND_DIV, // /
-    ND_EQUAL,  // ==
-    ND_NOTEQ,  // !=
+    ND_EQUAL, // ==
+    ND_NOTEQ, // !=
+    ND_GREATER, // >
     ND_NUM, // 整数
 } NodeKind;
 
@@ -136,7 +137,8 @@ Token *tokenize(char *p) {
             continue;            
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/'
+            || *p == '(' || *p == ')' || *p == '>') {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -217,14 +219,25 @@ Node *add() {
     }
 }
 
-Node *equality() {
+Node *relational() {
     Node *node = add();
 
     for (;;) {
+        if (consume(">"))
+            node = new_node(ND_GREATER, node, add());
+        else
+            return node;
+    }
+}
+
+Node *equality() {
+    Node *node = relational();
+
+    for (;;) {
         if (consume("=="))
-            node = new_node(ND_EQUAL, node, add());
+            node = new_node(ND_EQUAL, node, relational());
         else if (consume("!="))
-            node = new_node(ND_NOTEQ, node, add());
+            node = new_node(ND_NOTEQ, node, relational());
         else
             return node;
     }
@@ -272,6 +285,11 @@ void gen(Node *node) {
             printf("    cmp r0, r1\n");
             printf("    moveq r0, #0\n");
             printf("    movne r0, #1\n");
+            break;
+        case ND_GREATER:
+            printf("    cmp r0, r1\n");
+            printf("    movgt r0, #1\n");
+            printf("    movle r0, #0\n");
             break;
     }
 
