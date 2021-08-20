@@ -35,8 +35,6 @@ typedef enum {
     ND_NOTEQ, // !=
     ND_LESS, // <
     ND_LESS_EQUAL, // <=
-    ND_GREATER, // >
-    ND_GREATER_EQUAL, // >=
     ND_NUM, // 整数
 } NodeKind;
 
@@ -231,9 +229,9 @@ Node *relational() {
         if (consume("<="))
             node = new_node(ND_LESS_EQUAL, node, add());
         if (consume(">"))
-            node = new_node(ND_GREATER, node, add());
+            node = new_node(ND_LESS, add(), node);
         if (consume(">="))
-            node = new_node(ND_GREATER_EQUAL, node, add());
+            node = new_node(ND_LESS_EQUAL, add(), node);
         else
             return node;
     }
@@ -304,16 +302,6 @@ void gen(Node *node) {
             printf("    cmp r0, r1\n");
             printf("    movle r0, #1\n");
             printf("    movgt r0, #0\n");
-            break;
-        case ND_GREATER:
-            printf("    cmp r0, r1\n");
-            printf("    movgt r0, #1\n");
-            printf("    movle r0, #0\n");
-            break;
-        case ND_GREATER_EQUAL:
-            printf("    cmp r0, r1\n");
-            printf("    movge r0, #1\n");
-            printf("    movlt r0, #0\n");
             break;
     }
 
