@@ -33,7 +33,10 @@ typedef enum {
     ND_DIV, // /
     ND_EQUAL, // ==
     ND_NOTEQ, // !=
+    ND_LESS, // <
+    ND_LESS_EQUAL, // <=
     ND_GREATER, // >
+    ND_GREATER_EQUAL, // >=
     ND_NUM, // 整数
 } NodeKind;
 
@@ -130,7 +133,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (!strncmp(p, "==", 2) | !strncmp(p, "!=", 2)) {
+        if (!strncmp(p, "==", 2) | !strncmp(p, "!=", 2) | !strncmp(p, "<=", 2) | !strncmp(p, ">=", 2)) {
             cur = new_token(TK_RESERVED, cur, p);
             cur->len = 2;
             p += 2;
@@ -138,7 +141,7 @@ Token *tokenize(char *p) {
         }
 
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/'
-            || *p == '(' || *p == ')' || *p == '>') {
+            || *p == '(' || *p == ')' || *p == '<' || *p == '>') {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -223,8 +226,14 @@ Node *relational() {
     Node *node = add();
 
     for (;;) {
+        if (consume("<"))
+            node = new_node(ND_LESS, node, add());
+        if (consume("<="))
+            node = new_node(ND_LESS_EQUAL, node, add());
         if (consume(">"))
             node = new_node(ND_GREATER, node, add());
+        if (consume(">="))
+            node = new_node(ND_GREATER_EQUAL, node, add());
         else
             return node;
     }
@@ -286,10 +295,25 @@ void gen(Node *node) {
             printf("    moveq r0, #0\n");
             printf("    movne r0, #1\n");
             break;
+        case ND_LESS:
+            printf("    cmp r0, r1\n");
+            printf("    movlt r0, #1\n");
+            printf("    movge r0, #0\n");
+            break;
+        case ND_LESS_EQUAL:
+            printf("    cmp r0, r1\n");
+            printf("    movle r0, #1\n");
+            printf("    movgt r0, #0\n");
+            break;
         case ND_GREATER:
             printf("    cmp r0, r1\n");
             printf("    movgt r0, #1\n");
             printf("    movle r0, #0\n");
+            break;
+        case ND_GREATER_EQUAL:
+            printf("    cmp r0, r1\n");
+            printf("    movge r0, #1\n");
+            printf("    movlt r0, #0\n");
             break;
     }
 
