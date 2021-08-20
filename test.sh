@@ -26,5 +26,7 @@ assert 5 '15/3'
 assert 4 '(3+5)/2'
 assert 2 '-3+5'
 assert 6 '+2+4'
+assert 1 '3 == 3'
+assert 0 '3 == (2+5)'
 
 echo OK

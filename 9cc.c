@@ -31,6 +31,7 @@ typedef enum {
     ND_SUB, // -
     ND_MUL, // *
     ND_DIV, // /
+    ND_EQUAL,  // ==
     ND_NUM, // 整数
 } NodeKind;
 
@@ -127,6 +128,13 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (!strncmp(p, "==", 2)) {
+            cur = new_token(TK_RESERVED, cur, p);
+            cur->len = 2;
+            p += 2;
+            continue;            
+        }
+
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
@@ -195,7 +203,7 @@ Node *mul() {
     }
 }
 
-Node *expr() {
+Node *add() {
     Node *node = mul();
 
     for (;;) {
@@ -206,6 +214,21 @@ Node *expr() {
         else
             return node;
     }
+}
+
+Node *equality() {
+    Node *node = add();
+
+    for (;;) {
+        if (consume("=="))
+            node = new_node(ND_EQUAL, node, add());
+        else
+            return node;
+    }
+}
+
+Node *expr() {
+    return equality();
 }
 
 void gen(Node *node) {
@@ -236,6 +259,11 @@ void gen(Node *node) {
             printf("    bl  __divsi3\n");
             printf("    ldr lr, [sp], #4\n");
             printf("    bx  lr\n");
+            break;
+        case ND_EQUAL:
+            printf("    cmp r0, r1\n");
+            printf("    moveq r0, #1\n");
+            printf("    movne r0, #0\n");
             break;
     }
 
