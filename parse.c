@@ -1,52 +1,4 @@
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-typedef enum {
-    TK_RESERVED,  // 記号
-    TK_NUM,       // 整数トークン
-    TK_EOF,       // 入力の終わりを表すトークン
-} TokenKind;
-
-typedef struct Token Token;
-
-// トークン型
-struct Token {
-    TokenKind kind; // トークンの型
-    Token *next;    // 次の入力トークン
-    int val;        // kindがTK_NUMの場合、その数値
-    char *str;      // トークン文字列
-    int len;        // トークンの長さ
-};
-
-// 現在着目しているトークン
-Token *token;
-
-// 抽象構文木のノードの種類
-typedef enum {
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_EQUAL, // ==
-    ND_NOTEQ, // !=
-    ND_LESS, // <
-    ND_LESS_EQUAL, // <=
-    ND_NUM, // 整数
-} NodeKind;
-
-typedef struct Node Node;
-
-// 抽象構文木のノードの型
-struct Node {
-    NodeKind kind; // ノードの型
-    Node *lhs;     // 左辺
-    Node *rhs;     // 右辺
-    int val;       // kindがND_NUMの場合のみ使う
-};
+#include "9cc.h"
 
 // エラーを報告するための関数
 // printfと同じ引数を取る
@@ -57,9 +9,6 @@ void error(char *fmt, ...) {
     fprintf(stderr, "\n");
     exit(1);
 }
-
-// 入力プログラム
-char *user_input;
 
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
@@ -172,8 +121,6 @@ Node *new_node_num(int val) {
     return node;
 }
 
-Node *expr();
-
 Node *primary() {
     // 次のトークンが"("なら、"(" expr ")"のはず
     if (consume("(")) {
@@ -252,83 +199,4 @@ Node *equality() {
 
 Node *expr() {
     return equality();
-}
-
-void gen(Node *node) {
-    if (node->kind == ND_NUM) {
-        printf("    mov r3, #%d\n", node->val);
-        printf("    push {r3}\n", node->val);
-        return;
-    }
-
-    gen(node->lhs);
-    gen(node->rhs);
-
-    printf("    pop {r1}\n");
-    printf("    pop {r0}\n");
-
-    switch (node->kind) {
-        case ND_ADD:
-            printf("    add r0, r1\n");
-            break;
-        case ND_SUB:
-            printf("    sub r0, r1\n");
-            break;
-        case ND_MUL:
-            printf("    mul r0, r1\n");
-            break;
-        case ND_DIV:
-            printf("    str lr, [sp, #-4]!\n");
-            printf("    bl  __divsi3\n");
-            printf("    ldr lr, [sp], #4\n");
-            printf("    bx  lr\n");
-            break;
-        case ND_EQUAL:
-            printf("    cmp r0, r1\n");
-            printf("    moveq r0, #1\n");
-            printf("    movne r0, #0\n");
-            break;
-        case ND_NOTEQ:
-            printf("    cmp r0, r1\n");
-            printf("    moveq r0, #0\n");
-            printf("    movne r0, #1\n");
-            break;
-        case ND_LESS:
-            printf("    cmp r0, r1\n");
-            printf("    movlt r0, #1\n");
-            printf("    movge r0, #0\n");
-            break;
-        case ND_LESS_EQUAL:
-            printf("    cmp r0, r1\n");
-            printf("    movle r0, #1\n");
-            printf("    movgt r0, #0\n");
-            break;
-    }
-
-    printf("    push {r0}\n");
-}
-
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "引数の個数が正しくありません\n");
-        return 1;
-    }
-
-    user_input = argv[1];
-
-    // トークナイズする
-    token = tokenize(argv[1]);
-    Node *node = expr();
-
-    // アセンブリの前半部分を出力    
-    printf(".text\n");
-    printf(".globl main\n");
-    printf("main:\n");
-
-    // 抽象構文木を下りながらコード生成
-    gen(node);
-
-    printf("    pop {r0}\n");
-    printf("    bx lr\n");
-    return 0;
 }
