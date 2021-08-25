@@ -19,9 +19,9 @@ int main(int argc, char **argv) {
 
     // プロローグ
     // 変数26個分の領域を確保する
-    printf("    push rbp\n");
-    printf("    mov rbp, rsp\n");
-    printf("    sub rsp, 208\n");
+    printf("    push {fp}\n");
+    printf("    mov fp, sp\n");
+    printf("    sub sp, #208\n");
 
     // 先頭の式から順にコード生成
     for (int i = 0; code[i]; i++) {

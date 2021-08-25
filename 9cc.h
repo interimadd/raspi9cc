@@ -50,6 +50,7 @@ struct Node {
     int offset;    // kindがND_LVARの場合のみ使う
 };
 
+void error(char *fmt, ...);
 Token *tokenize(char *p);
 Node *expr();
 Node *program();
