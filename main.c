@@ -10,15 +10,26 @@ int main(int argc, char **argv) {
 
     // トークナイズする
     token = tokenize(argv[1]);
-    Node *node = expr();
+    program();
 
     // アセンブリの前半部分を出力    
     printf(".text\n");
     printf(".globl main\n");
     printf("main:\n");
 
-    // 抽象構文木を下りながらコード生成
-    gen(node);
+    // プロローグ
+    // 変数26個分の領域を確保する
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, 208\n");
+
+    // 先頭の式から順にコード生成
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
+
+        // 式の評価結果としてスタックに1つの値が残っているはずなので、スタックがあふれないようにポップしておく
+        printf("    pop rax\n");
+    }
 
     printf("    pop {r0}\n");
     printf("    bx lr\n");
