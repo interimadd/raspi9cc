@@ -25,13 +25,12 @@ int main(int argc, char **argv) {
 
     // 先頭の式から順にコード生成
     for (int i = 0; code[i]; i++) {
+        printf("@ ---------------\n"); // カンマごとの区切りがわかりやすくなるように区切りコメントを入れておく
         gen(code[i]);
 
         // 式の評価結果としてスタックに1つの値が残っているはずなので、スタックがあふれないようにポップしておく
-        printf("    pop rax\n");
+        printf("    pop {r0}\n");
     }
 
-    printf("    pop {r0}\n");
-    printf("    bx lr\n");
     return 0;
 }

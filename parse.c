@@ -23,6 +23,13 @@ void error_at(char *loc, char *fmt, ...) {
     exit(1);
 }
 
+bool is_alnum(char c) {
+    return ('a' <= c && c <= 'z') ||
+           ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') ||
+           (c == '_');
+}
+
 // 次のトークンが期待している記号の時には、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char *op) {
@@ -40,6 +47,13 @@ Token *consume_ident() {
     Token *ret_tok = token;
     token = token->next;
     return ret_tok;  
+}
+
+bool consume_return() {
+    if (token->kind != TK_RETURN) 
+      return false;
+    token = token->next;
+    return true;  
 }
 
 // 次のトークンが期待している記号の時には、トークンを1つ読み進める。
@@ -88,6 +102,14 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (!strncmp(p, "return", 6) && !is_alnum(p[6])) {
+            cur = new_token(TK_RETURN, cur, p);
+            cur->len = 6;
+            cur->str = p;
+            p += 6;
+            continue;
+        }
+
         if (!strncmp(p, "==", 2) | !strncmp(p, "!=", 2) | !strncmp(p, "<=", 2) | !strncmp(p, ">=", 2)) {
             cur = new_token(TK_RESERVED, cur, p);
             cur->len = 2;
@@ -104,16 +126,19 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_EOF, cur, p++);
-            cur->len = 1;
-            cur->str[0] = *p;
-            continue;
-        }
-
         if (isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p);
             cur->val = strtol(p, &p, 10);
+            continue;
+        }
+
+        if (is_alnum(*p)) {
+            cur = new_token(TK_IDENT, cur, p);
+            cur->len = 1;
+            cur->str = p;
+            while (is_alnum(*++p)) {
+                cur->len++;
+            };
             continue;
         }
 
@@ -169,7 +194,7 @@ Node *primary() {
             lvar->name = tok->str;
             lvar->len = tok->len;
             lvar->offset = locals->offset + 8;
-            node->offset = locals->offset;
+            node->offset = lvar->offset;
             locals = lvar;
         }
         return node;
@@ -256,14 +281,25 @@ Node *expr() {
 }
 
 Node *stmt() {
-    Node *node = expr();
-    expect(";");
+    Node *node;
+
+    if (consume_return()) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    } else {
+        node = expr();
+    }
+    if (!consume(";"))
+        error_at(token->str, "';'ではないトークンです");
     return node;
 }
 
 Node *program() {
     int i = 0;
-    while(!at_eof())
+    locals = calloc(1, sizeof(LVar));
+    while(!at_eof()){
         code[i++] = stmt();
+    }
     code[i] = NULL;
 }

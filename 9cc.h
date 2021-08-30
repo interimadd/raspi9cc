@@ -10,6 +10,7 @@ typedef enum {
     TK_RESERVED,  // 記号
     TK_IDENT,     // 識別子
     TK_NUM,       // 整数トークン
+    TK_RETURN,    // return
     TK_EOF,       // 入力の終わりを表すトークン
 } TokenKind;
 
@@ -49,6 +50,7 @@ typedef enum {
     ND_ASSIGN,     // =
     ND_LVAR,       // ローカル変数
     ND_NUM,        // 整数
+    ND_RETURN,     // return
 } NodeKind;
 
 typedef struct Node Node;
@@ -69,5 +71,6 @@ Node *program();
 void gen(Node *node);
 
 Token *token; // 現在着目しているトークン
+Token *tokens[255]; // 現在着目しているトークン
 char *user_input; // 入力プログラム
 Node *code[100];
