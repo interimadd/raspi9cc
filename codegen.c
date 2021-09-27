@@ -61,7 +61,6 @@ void gen(Node *node) {
             printf("    str lr, [sp, #-4]!\n");
             printf("    bl  __divsi3\n");
             printf("    ldr lr, [sp], #4\n");
-            printf("    bx  lr\n");
             break;
         case ND_EQUAL:
             printf("    cmp r0, r1\n");
