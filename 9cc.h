@@ -71,6 +71,5 @@ Node *program();
 void gen(Node *node);
 
 Token *token; // 現在着目しているトークン
-Token *tokens[255]; // 現在着目しているトークン
 char *user_input; // 入力プログラム
 Node *code[100];
